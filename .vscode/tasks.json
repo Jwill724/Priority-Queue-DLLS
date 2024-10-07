@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build with Clang (Cygwin)",
+        "type": "shell",
+        "command": "C:/cygwin64/bin/clang",
+        "args": [
+          "-std=gnu99",
+          "-g",
+          "${file}",
+          "-o",
+          "${fileDirname}/${fileBasenameNoExtension}.exe"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$gcc"],
+        "detail": "Build task for compiling with Clang from Cygwin"
+      }
+    ]
+  }
+  
