@@ -1,5 +1,5 @@
 #pragma GCC diagnostic ignored "-Wformat"      // switches of format
-#pragma GCC diagnostic ignored "-Wparantheses"
+#pragma GCC diagnostic ignored "-Wparentheses"
 #pragma GCC optimise ("", off)
 
 #include <stdio.h>
@@ -28,13 +28,13 @@ typedef size_t   usize;
 typedef ssize_t  isize;
 
 // queue the element into list
-typedef struct QElement {
+typedef struct QNodeData_t {
     char key;
     u32 prio;
-} QElement_t;
+} QNodeData_t;
 
 // last element in list
-typedef struct LElement {
+typedef struct QNode {
 
 
     // each element of a doubly linked list L is an object with key and priority and next and prev pointers
@@ -45,11 +45,11 @@ typedef struct LElement {
 
     // update the definitions to use a sentinel for checking the error conditions
 
-    QElement_t element;      // the key stored at each list node  
-    LElement_t *next, *prev; // these are the pointers to next and prev of list element;
-    
-     
-} LElement_t;
+    QNodeData_t element;       // the key stored at each list node  
+    struct QNode *next, *prev; // these are the pointers to next and prev of list element;
+
+
+} QNode_t;
 
 // doubly linked list with sentinel yea
 typedef struct DLLS {
@@ -72,7 +72,7 @@ typedef struct DLLS {
     // changing a regular doubly linked list into a circular, doubly linked list with a sentinel
     // in which the sentinel lies between head and tail
 
-    LElement_t *sentinel; // NULL node, connects to head and tail for circle
+    QNode_t *sentinel; // NULL node, connects to head and tail for circle
 } DLLS_t;
 
 // priority queue
@@ -86,40 +86,41 @@ typedef struct PrioQ {
 // returning a pointer to this element, if no object with key k appears in the list, then the procedure
 // returns null
 // takes linear time in the worst case to find an element
-LElement_t *ListSearch(DLLS_t *L, i16 k);
+QNode_t *ListSearch(DLLS_t *L, i16 k);
 
 
 // given an element x whose key attribute has already been set, the listinsert procedure "splices"
 // x onto the head of the list, runs in constant time
-void ListInsert(DLLS_t *L, QElement_t x);
+void ListInsert(DLLS_t *L, QNodeData_t x);
 
 // removes an element x from the list, it must be given a pointer to x, and it "splices" x out of the list
 // by updating pointers. runs in constant time
 // if we wish to delete an element with a given key, we must first call list search to retrieve a pointer to element
 // the caller may free the deleted element x
-LElement_t *ListDelete(DLLS_t *L, LElement_t *x);
+QNode_t *ListDelete(DLLS_t *L, QNode_t *x);
 
 // the procedure removes the last element from the list
 // the caller may free the deleted element.x
-LElement_t *ListDeleteLast(DLLS_t *L);
+QNode_t *ListDeleteLast(DLLS_t *L);
 
 // walks through the sequence L and prints its elements in order
-void Iterate(DLLS_t *L);
+void IterateList(DLLS_t *L);
 
 void Enqueue();
 char Dequeue();
 char DequeueMax();
-char findMax();
+char FindMax();
 PQ_t *Build(u32 maxlen);
 
+// global Priority Queue
 PQ_t* myQ;
-LElement_t *ListSearch(DLLS_t *L, i16 k) {
+
+QNode_t *ListSearch(DLLS_t *L, i16 k) {
     if (!L || !L->sentinel) {
         return NULL;               // list or sentinel dont exist
     }
 
-    LElement_t *x = L->sentinel->next;
-
+    QNode_t *x = L->sentinel->next;
     while(x != L->sentinel) {
         if (x->element.key == k) {
             return x;              // element found
@@ -129,43 +130,38 @@ LElement_t *ListSearch(DLLS_t *L, i16 k) {
     return NULL;                   // element not found
 }
 
-// change the parameter profile, x should be of type lelement_t, x should be initialized
-// by the caller (within the enqueue() subprogram)
-void ListInsert(DLLS_t *L, QElement_t x) {
+void ListInsert(DLLS_t *L, QNodeData_t x) {
     if (!L || !L->sentinel) {
-        return NULL; 
+        printf("\nList is empty\n");
+        return; 
     }
 
-    LElement_t *newElem = (LElement_t*)malloc(sizeof(LElement_t)); 
-    if (!newElem) {
+    QNode_t *newNode = (QNode_t*)malloc(sizeof(QNode_t)); 
+    if (!newNode) {
         printf("\nMemory allocation failed\n");
         return;
     }
 
-    newElem->element.key = x.key;
-    newElem->element.prio = x.prio;
+    newNode->element.key = x.key;
+    newNode->element.prio = x.prio;
 
-    newElem->next = L->sentinel->next;
-    newElem->prev = L->sentinel;
+    newNode->next = L->sentinel->next;
+    newNode->prev = L->sentinel;
 
     // if list isnt empty, adjust previous pointer to new element
     if (L->sentinel->next != L->sentinel) {
-        L->sentinel->next->prev = newElem;
+        L->sentinel->next->prev = newNode;
     }
 
     // update to new head
-    L->sentinel->next = newElem;
+    L->sentinel->next = newNode;
 }
 
-// the parameter L is kept for compatibility. we are not using it. x must be freed by the caller
-LElement_t* ListDelete(DLLS_t *L, LElement_t *x) {
-    // if the order of the evaluation is from left to right, no problem
-    // otherwise access to the null pointer is possible
-    // please fix this so NO pointer is accessed, if it is NULL
-
+// X TO BE FREED BY CALLER
+// the parameter L is kept for compatibility
+QNode_t* ListDelete(DLLS_t *L, QNode_t *x) {
     // checks if theres any null values
-    if (x && x->prev && x->next)
-    {
+    if (x && x->prev && x->next) {
         x->prev->next = x->next;
         x->next->prev = x->prev;
     }
@@ -173,51 +169,60 @@ LElement_t* ListDelete(DLLS_t *L, LElement_t *x) {
     return x;
 }
 
-LElement_t *ListDeleteLast(DLLS_t *L) {
-    LElement_t *x = NULL;
+// X TO BE FREED BY CALLER
+QNode_t *ListDeleteLast(DLLS_t *L) {
+    QNode_t *x = NULL;
 
     // assumming that the expression is evaluated from left to right
-    if (!L || !(L->sentinel))
+    if (!L || !(L->sentinel)) {
+        printf("\nError: list or sentinel is invalid\n");
         exit(-1);
-    x = // complete
-    x->prev->next = // complete
-    x->next->prev = // complete
+    }
+
+    x = L->sentinel->prev;         // x finds tail
+    x->prev->next = L->sentinel;   // tail prev to find back node next and connect to sentinel
+    L->sentinel->prev = x->prev;   // sentinel prev points to back node before the "then" tail
     return x;
 }
-void Iterate(DLLS_t *L) {
-    LElement_t *x;
-    if (!L || !(L->sentinel))
-        exit(-1);
-    x = // complete
 
-    while ( (x != NULL) && (x != L->sentinel) ) {
+void IterateList(DLLS_t *L) {
+    QNode_t *x = NULL;
+
+    if (!L || (!L->sentinel)) {
+        printf("\nError: list or sentinel is invalid\n");
+        exit(-1);
+    }
+
+    // start at head
+    x = L->sentinel->next;
+
+    while (x != NULL && x != L->sentinel) {
         printf("\n key %d and priority %d", x->element.key, x->element.prio);
         x = x->next;
     }
 }
 
 int main(int argc, const char* argv[]) {
-
     i16 test = PQLIMIT;
 
-    myQ = build(test);
+    myQ = Build(test);
     if (myQ == NULL) {
         printf("\nBadpointer. \n");
         exit(-1);
     }
 
-    QElement_t e;
+    QNodeData_t e;
 
     for (int i = 0; i < test; i++) {
         e.key == rand() % 127;
         e.prio == rand() % 4;
-        Enqueue(myQ, e);        // contents of e passed to enqueue()-> by value and stored in myQ->L
+        Enqueue(myQ, e);
         printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
     }
-    Iterate(myQ->L);
+    IterateList(myQ->L);
     Enqueue(myQ, e);
 
-    LElement_t *list = ListSearch(myQ->L, 25);
+    QNode_t *list = ListSearch(myQ->L, 25);
     if (list == NULL) {
         printf("\nBadpointer.\n");
     }
@@ -230,9 +235,9 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    // complete this section to dequeue the element that has the maximum priority. if several elements
-    // have the same max priority, then the element enqueued first should be dequeued
-
+    printf("\nDequeuing element with max priority\n");
+    char dqMaxVal = DequeueMax(myQ);
+    printf("\nDequeued max priority element: %c\n", dqMaxVal);
 
     for (int i = 0; i < test; i++) {
         Dequeue(myQ);
@@ -244,91 +249,128 @@ int main(int argc, const char* argv[]) {
     printf("\n\nYou can store a maximum of %lu elements in your PQ (PQ->maxSize), where as maxSize of a PQ is capped at PQLIMIT,"
             " which is currently set to %lu in your program.\n\n\n", myQ->maxSize, PQLIMIT);
 
-    // free anything that was created with malloc
-    // dont forget to free all elements of the list in the myQ->L before freeing L->sentinel
-    // walk through the list and free all elements
-    // compelete
+    while(myQ->elementNum > 0) {
+        Dequeue(myQ);
+    }
+
+    if (myQ->L->sentinel)
+        free(myQ->L->sentinel);
+    if (myQ->L)
+        free(myQ->L);
+    if (myQ) 
+        free(myQ);
 
     return 0;
 }
 
-PQ_t* Build(u32 maxlen) {
+PQ_t *Build(u32 maxlen) {
     PQ_t *pq = NULL;
-    if ((maxlen > 0) && (maxlen <= PQLIMIT)) {
+
+    if (maxlen > 0 && maxlen <= PQLIMIT) {
         pq = (PQ_t*)malloc(sizeof(PQ_t));
         if (pq) {
-            pq->maxSize = // complete
-            pq->elementNum = // complete
-            if(pq->L = malloc(sizeof(DLLS_t))) {
-                pq->L->sentinel = // complete
+            pq->maxSize = maxlen;
+            pq->elementNum = 0;    // start count at zero
+
+            // allocate memory for dlls
+            pq->L = (DLLS_t*)malloc(sizeof(DLLS_t));
+
+            // sentinel node setup
+            if (pq->L) {
+                pq->L->sentinel = (QNode_t*)malloc(sizeof(QNode_t));
                 if (pq->L->sentinel) {
-                    pq->L->sentinel->next =
-                    pq->L->sentinel->prev = 
-                    pq->L->sentinel->element.key = 0;  // insignificant
-                    pq->L->sentinel->element.prio = 0; // insignificant
+                    pq->L->sentinel->next = pq->L->sentinel;
+                    pq->L->sentinel->prev = pq->L->sentinel;
+                    pq->L->sentinel->element.key = 0;
+                    pq->L->sentinel->element.prio = 0;
                 }
                 else {
-                    printf("\nBuild()>> Could not allocate memory for the lists' sentinel - Bad pointer %x\n", BADPTR);
-                    return NULL;
+                    printf("\nBuild()>> Failed to allocate memory for sentinel node - Bad pointer %x\n", BADPTR);
+                    free(pq->L);
+                    free(pq);
+                    return NULL; 
                 }
-                // using sentinel, elminate the needs for the head (front) and tail (rear) pointers in a list structure
-                // pq->L->head = NULL;
-                // pq->L->tail = NULL;
             }
             else {
-                printf("\nBuild()>> Could not allocate memory for the queue's list - Bad pointer %x\n", BADPTR);
+                printf("\nBuild()>> Failed to allocate memory for the queue's list - Bad pointer %x\n", BADPTR);
+                free(pq);
                 return NULL;
             }
         }
         else {
-            printf("\nBuild()>> Could not allocate memory for the priority queue - Bad pointer %x\n", BADPTR);
+            printf("\nBuild()>> Failed to allocate memory for the priority queue - Bad pointer %x\n", BADPTR);
             return NULL;
         }
     }
-    // we could add an else - clause to print an error message regarding invalid maxlen
-    return; // complete
+    else {
+        printf("\nBuild()>> Invalid maxlen - %u\n", BADPTR);
+        return NULL;
+    }
+
+    return pq;
 }
 
-void Enqueue(PQ_t* pq, QElement_t e) {
-    if () { // complete
-        // insert e into the list
-
-        pq->elementNum = pq->elementNum + 1;
+void Enqueue(PQ_t* pq, QNodeData_t e) {
+    if (pq->elementNum >= pq->maxSize) { 
+        printf("\nEnqueue()>> Attempt to overflow the queue at %p was prevented.\n", pq);
+        return;
     }
-    else {
-        printf("\nEnqueue()>> Attempt to overflox the queue at %p was prevented.\n", pq);
+    // insert e into the list
+    ListInsert(pq->L, e);
+    pq->elementNum++;
+}
+
+char Dequeue(PQ_t* pq) {
+    char val = -1;
+
+    if(!pq || !pq->L || !(pq->L->sentinel)) {
+        printf("\nDequeue()>> Invalid list or sentinel.\n");
+        return (char) BADPTR;
+    }
+    if(pq->elementNum == 0) {
+        printf("\nDequeue()>> Attempt to underflow the queue at %p was prevented.\n", pq);
+        return (char) UNDERFLOW;
     }
 
-    // change to return a Qelement
-
-    char Dequeue(PQ_t* pq) {
-        char val = -1;
-        // complete the code here to do all the following testing
-        // checking pq must precede checking pq->L
-        // also pq->L->sentinel must be checked before accessing it
-        // always check a pointer before dereferencing it
-
-        // complete the code below to prevent underflow of the queue
-
-        if() { // complete
-
-
-            printf("\nEnqueue()>> Attempt to overflox the queue at %p was prevented.\n");
-            return (char) UNDERFLOW;
-        }
-        LElement_t *ptr = ListDeleteLast(pq->L);
-        if (ptr) {
-            // complete
-        }
+    QNode_t *ptr = ListDeleteLast(pq->L);
+    if (ptr) {
+        val = ptr->element.key;
+        pq->elementNum--;
+        free(ptr);
     }
     return (char) val;
 }
 
 char DequeueMax(PQ_t* pq) {
-    // complete the declaration of dequeueMAX
-    // it should dequeue the element with the maximal priority if several elements
-    // with the same max priority exist, the element with the longest waiting time should be dequeued
-    // aftert dequeuing, the element should be deleted from the list and corressponding memory deallocated
+    char val = -1;
 
-    return 0;
+    if(!pq || !pq->L || !(pq->L->sentinel)) {
+        printf("\nDequeue()>> Invalid list or sentinel.\n");
+        return (char) BADPTR;
+    }
+    if(pq->elementNum == 0) {
+        printf("\nDequeue()>> Attempt to underflow the queue at %p was prevented.\n", pq);
+        return (char) UNDERFLOW;
+    }
+
+    QNode_t *maxNode = NULL;
+    QNode_t *x = pq->L->sentinel->next; 
+
+    while (x != pq->L->sentinel) {
+        if (!maxNode || x->element.prio > maxNode->element.prio) {
+            maxNode = x;
+        }
+        x = x->next;
+    }
+
+    if (maxNode) {
+        val = maxNode->element.key;
+        QNode_t *deletedNode = ListDelete(pq->L, maxNode);
+        pq->elementNum--;
+
+        if (deletedNode) {
+            free(deletedNode);
+        }
+    }
+    return (char) val;
 }
