@@ -116,22 +116,30 @@ PQ_t *Build(u32 maxlen);
 PQ_t* myQ;
 
 QNode_t *ListSearch(DLLS_t *L, i16 k) {
-    if (!L || !L->sentinel) {
-        return NULL;               // list or sentinel dont exist
-    }
+    QNode_t *x;
 
-    QNode_t *x = L->sentinel->next;
-    while(x != L->sentinel) {
-        if (x->element.key == k) {
-            return x;              // element found
-        }
-        x = x->next;
+    if (!L) {
+        return NULL;        // list doesn't exist
     }
-    return NULL;                   // element not found
+    else {
+        if (!L->sentinel) {
+            x = NULL;       // sentinel doesn't exist
+        }
+        else {
+            x = L->sentinel->next;
+            while (x != L->sentinel) {
+                if (x->element.key == k) {
+                    break;
+                }
+                x = x->next;
+            }
+        }
+    }
+    return x;
 }
 
 void ListInsert(DLLS_t *L, QNodeData_t x) {
-    if (!L || !L->sentinel) {
+    if (!L || !(L->sentinel)) {
         printf("\nList is empty\n");
         return; 
     }
@@ -212,36 +220,46 @@ int main(int argc, const char* argv[]) {
     }
 
     QNodeData_t e;
-
     for (int i = 0; i < test; i++) {
-        e.key == rand() % 127;
-        e.prio == rand() % 4;
+        e.key = rand() % 127;
+        e.prio = rand() % 4;
         Enqueue(myQ, e);
         printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
     }
     IterateList(myQ->L);
     Enqueue(myQ, e);
 
-    QNode_t *list = ListSearch(myQ->L, 25);
+
+    int numOfElements = 0;
+    QNode_t *temp = NULL;
+    temp = myQ->L->sentinel->next;
+    while (temp != NULL && temp != myQ->L->sentinel) {
+        numOfElements++;
+        temp = temp->next;
+    }
+    printf("\nThe amount of elements is %d\n", numOfElements);
+
+    i16 key = 25;
+    QNode_t *list = ListSearch(myQ->L, key);
     if (list == NULL) {
         printf("\nBadpointer.\n");
     }
     else {
         if (list == myQ->L->sentinel) {
-            printf("\n We could not find k = %d in the Queue\n", e.key);
+            printf("\n We could not find k = %d in the Queue\n", key);
         }
         else {
-            printf("\n We could not find the list element containing %d at %p\n", list->element.key, list);
+            printf("\n We found the list element containing %d at %p\n", list->element.key, list);
         }
     }
 
-    printf("\nDequeuing element with max priority\n");
+    printf("\nDequeuing element with max priority");
     char dqMaxVal = DequeueMax(myQ);
-    printf("\nDequeued max priority element: %c\n", dqMaxVal);
+    printf("\nDequeued max priority element: %d\n", dqMaxVal);
 
     for (int i = 0; i < test; i++) {
         Dequeue(myQ);
-        printf("After Dequeue() -> the counter takes %lu\n", myQ->elementNum);
+        printf("\nAfter Dequeue() -> the counter takes %lu\n", myQ->elementNum);
     }
 
     Dequeue(myQ);
@@ -259,6 +277,8 @@ int main(int argc, const char* argv[]) {
         free(myQ->L);
     if (myQ) 
         free(myQ);
+    if (temp)
+        free(temp);
 
     return 0;
 }
@@ -281,7 +301,7 @@ PQ_t *Build(u32 maxlen) {
                 if (pq->L->sentinel) {
                     pq->L->sentinel->next = pq->L->sentinel;
                     pq->L->sentinel->prev = pq->L->sentinel;
-                    pq->L->sentinel->element.key = 0;
+                    pq->L->sentinel->element.key = '\0';
                     pq->L->sentinel->element.prio = 0;
                 }
                 else {
@@ -334,6 +354,7 @@ char Dequeue(PQ_t* pq) {
 
     QNode_t *ptr = ListDeleteLast(pq->L);
     if (ptr) {
+        printf("Deleting node %c\n", ptr->element.key);
         val = ptr->element.key;
         pq->elementNum--;
         free(ptr);
