@@ -156,9 +156,13 @@ void ListInsert(DLLS_t *L, QNodeData_t x) {
     newNode->next = L->sentinel->next;
     newNode->prev = L->sentinel;
 
-    // if list isnt empty, adjust previous pointer to new element
+    // if list isnt empty, adjust previous pointer of the first element
     if (L->sentinel->next != L->sentinel) {
         L->sentinel->next->prev = newNode;
+    }
+    else {
+        // if list is empty adjust sentinels prev pointer 
+        L->sentinel->prev = newNode;
     }
 
     // update to new head
@@ -190,6 +194,7 @@ QNode_t *ListDeleteLast(DLLS_t *L) {
     x = L->sentinel->prev;         // x finds tail
     x->prev->next = L->sentinel;   // tail prev to find back node next and connect to sentinel
     L->sentinel->prev = x->prev;   // sentinel prev points to back node before the "then" tail
+
     return x;
 }
 
@@ -229,16 +234,6 @@ int main(int argc, const char* argv[]) {
     IterateList(myQ->L);
     Enqueue(myQ, e);
 
-
-    int numOfElements = 0;
-    QNode_t *temp = NULL;
-    temp = myQ->L->sentinel->next;
-    while (temp != NULL && temp != myQ->L->sentinel) {
-        numOfElements++;
-        temp = temp->next;
-    }
-    printf("\nThe amount of elements is %d\n", numOfElements);
-
     i16 key = 25;
     QNode_t *list = ListSearch(myQ->L, key);
     if (list == NULL) {
@@ -277,8 +272,6 @@ int main(int argc, const char* argv[]) {
         free(myQ->L);
     if (myQ) 
         free(myQ);
-    if (temp)
-        free(temp);
 
     return 0;
 }
@@ -301,7 +294,7 @@ PQ_t *Build(u32 maxlen) {
                 if (pq->L->sentinel) {
                     pq->L->sentinel->next = pq->L->sentinel;
                     pq->L->sentinel->prev = pq->L->sentinel;
-                    pq->L->sentinel->element.key = '\0';
+                    pq->L->sentinel->element.key =  0;
                     pq->L->sentinel->element.prio = 0;
                 }
                 else {
@@ -343,7 +336,7 @@ void Enqueue(PQ_t* pq, QNodeData_t e) {
 char Dequeue(PQ_t* pq) {
     char val = -1;
 
-    if(!pq || !pq->L || !(pq->L->sentinel)) {
+    if(!pq || !pq->L || !pq->L->sentinel) {
         printf("\nDequeue()>> Invalid list or sentinel.\n");
         return (char) BADPTR;
     }
@@ -353,12 +346,12 @@ char Dequeue(PQ_t* pq) {
     }
 
     QNode_t *ptr = ListDeleteLast(pq->L);
-    if (ptr) {
-        printf("Deleting node %c\n", ptr->element.key);
+    if (ptr && ptr != pq->L->sentinel) {
         val = ptr->element.key;
         pq->elementNum--;
         free(ptr);
     }
+    
     return (char) val;
 }
 
@@ -384,7 +377,7 @@ char DequeueMax(PQ_t* pq) {
         x = x->next;
     }
 
-    if (maxNode) {
+    if (maxNode && maxNode != pq->L->sentinel) {
         val = maxNode->element.key;
         QNode_t *deletedNode = ListDelete(pq->L, maxNode);
         pq->elementNum--;
