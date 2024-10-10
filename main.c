@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdint.h>
 
 #define INIT -128                      // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)        // When a dequeue operation encounters an underflow, it should return -127
@@ -13,65 +12,22 @@
 #define BADPTR (0x08 + 0x03)
 #define PQLIMIT (unsigned long) 1.20E1
 
-// for machine to machine consistency
-typedef float    f32;
-typedef double   f64;
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef int8_t   i8;
-typedef int16_t  i16;
-typedef int32_t  i32;
-typedef int64_t  i64;
-typedef size_t   usize;
-typedef ssize_t  isize;
-
 // queue the element into list
 typedef struct QNodeData_t {
     char key;
-    u32 prio;
+    unsigned long prio;
 } QNodeData_t;
 
 // last element in list
 typedef struct QNode {
-
-
-    // each element of a doubly linked list L is an object with key and priority and next and prev pointers
-    // given an element x in the list, x.nexts points to its successor in the linked list
-    // and x.prev points to its pred
-    // if x.prev == null, the element x has no pred and is therefore the first element, or head of the list
-    // if x.next == null, the element x has no succ and is therefore the last element, or tail of the list
-
-    // update the definitions to use a sentinel for checking the error conditions
-
     QNodeData_t element;       // the key stored at each list node  
     struct QNode *next, *prev; // these are the pointers to next and prev of list element;
 
 
 } QNode_t;
 
-// doubly linked list with sentinel yea
+// doubly linked list with sentinel
 typedef struct DLLS {
-
-    // unsorted circular doubly linked list with a sentinel
-    // if sentinel.nextt = sentinel, the list is empty
-
-    // a list may have one of several forms, it may be either singly linked or doubly linked
-    // it may be sorted or not, and it may be circular or not
-
-    // if the list was sorted, the linear order of the list would correspond to the linear order
-    // of keys stored in the elements of the list
-    // the minimum element then would be the head of the list, and the maximum element would be the tail
-
-    // in a circular list, the pre pointer of the sentinel of the list points to the tail, and the next pointer
-    // of the tail of the list to the sentinel
-
-    // sentinel is a dummy object that allows us to simplify boundary conditions
-    // whatever we have a reference to null in list code, we repalce it by reference to the sentinel
-    // changing a regular doubly linked list into a circular, doubly linked list with a sentinel
-    // in which the sentinel lies between head and tail
-
     QNode_t *sentinel; // NULL node, connects to head and tail for circle
 } DLLS_t;
 
@@ -79,14 +35,14 @@ typedef struct DLLS {
 typedef struct PrioQ {
     DLLS_t *L;
 
-    u32 maxSize, elementNum;
+    unsigned long maxSize, elementNum;
 } PQ_t;
 
 // list search(L, k) finds the first element with key k in list L by a simple linear search
 // returning a pointer to this element, if no object with key k appears in the list, then the procedure
 // returns null
 // takes linear time in the worst case to find an element
-QNode_t *ListSearch(DLLS_t *L, i16 k);
+QNode_t *ListSearch(DLLS_t *L, int k);
 
 
 // given an element x whose key attribute has already been set, the listinsert procedure "splices"
@@ -110,12 +66,12 @@ void Enqueue();
 char Dequeue();
 char DequeueMax();
 char FindMax();
-PQ_t *Build(u32 maxlen);
+PQ_t *Build(unsigned long maxlen);
 
 // global Priority Queue
 PQ_t* myQ;
 
-QNode_t *ListSearch(DLLS_t *L, i16 k) {
+QNode_t *ListSearch(DLLS_t *L, int k) {
     QNode_t *x;
 
     if (!L) {
@@ -216,7 +172,7 @@ void IterateList(DLLS_t *L) {
 }
 
 int main(int argc, const char* argv[]) {
-    i16 test = PQLIMIT;
+    int test = PQLIMIT;
 
     myQ = Build(test);
     if (myQ == NULL) {
@@ -234,7 +190,7 @@ int main(int argc, const char* argv[]) {
     IterateList(myQ->L);
     Enqueue(myQ, e);
 
-    i16 key = 25;
+    int key = 25;
     QNode_t *list = ListSearch(myQ->L, key);
     if (list == NULL) {
         printf("\nBadpointer.\n");
@@ -276,7 +232,7 @@ int main(int argc, const char* argv[]) {
     return 0;
 }
 
-PQ_t *Build(u32 maxlen) {
+PQ_t *Build(unsigned long maxlen) {
     PQ_t *pq = NULL;
 
     if (maxlen > 0 && maxlen <= PQLIMIT) {
