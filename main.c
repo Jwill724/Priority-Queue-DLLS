@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
 
 #define INIT -128                      // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)        // When a dequeue operation encounters an underflow, it should return -127
@@ -172,7 +171,6 @@ void IterateList(DLLS_t *L) {
 
 int main(int argc, const char* argv[]) {
     int test = PQLIMIT;
-    srand(time(NULL));
 
     myQ = Build(test);
     if (myQ == NULL) {
@@ -192,7 +190,6 @@ int main(int argc, const char* argv[]) {
     Enqueue(myQ, e);
 
     int key = 25;
-
     QNode_t *list = ListSearch(myQ->L, key);
     if (list == NULL) {
         printf("\nBadpointer.\n");
