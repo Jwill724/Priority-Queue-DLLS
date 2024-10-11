@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
 
 #define INIT -128                      // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)        // When a dequeue operation encounters an underflow, it should return -127
@@ -44,7 +43,6 @@ typedef struct PrioQ {
 // returns null
 // takes linear time in the worst case to find an element
 QNode_t *ListSearch(DLLS_t *L, int k);
-
 
 // given an element x whose key attribute has already been set, the listinsert procedure "splices"
 // x onto the head of the list, runs in constant time
@@ -174,8 +172,6 @@ void IterateList(DLLS_t *L) {
 int main(int argc, const char* argv[]) {
     int test = PQLIMIT;
 
-    srand(time(NULL));
-
     myQ = Build(test);
     if (myQ == NULL) {
         printf("\nBadpointer. \n");
@@ -189,10 +185,12 @@ int main(int argc, const char* argv[]) {
         Enqueue(myQ, e);
         printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
     }
+
     IterateList(myQ->L);
     Enqueue(myQ, e);
 
     int key = 25;
+
     QNode_t *list = ListSearch(myQ->L, key);
     if (list == NULL) {
         printf("\nBadpointer.\n");
@@ -212,42 +210,6 @@ int main(int argc, const char* argv[]) {
     printf("\nDequeued max priority element: %d\n", dqMaxVal);
     IterateList(myQ->L);
 
-    key = 83;
-    list = ListSearch(myQ->L, key);
-    if (list == NULL) {
-        printf("\nBadpointer.\n");
-    }
-    else {
-        if (list == myQ->L->sentinel) {
-            printf("\n We could not find k = %d in the Queue\n", key);
-        }
-        else {
-            printf("\n We found the list element containing %d at %p\n", list->element.key, list);
-        }
-    }
-
-    DequeueMax(myQ);
-    IterateList(myQ->L);
-    key = 69;
-    list = ListSearch(myQ->L, key);
-    if (list == NULL) {
-        printf("\nBadpointer.\n");
-    }
-    else {
-        if (list == myQ->L->sentinel) {
-            printf("\n We could not find k = %d in the Queue\n", key);
-        }
-        else {
-            printf("\n We found the list element containing %d at %p\n", list->element.key, list);
-        }
-    }
-    for (int i = 0; i < 5; i++) {
-        e.key = rand() % 127;
-        e.prio = rand() % 4;
-        Enqueue(myQ, e);
-        printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
-    }
-    Dequeue(myQ);
     Dequeue(myQ);
 
     IterateList(myQ->L);
@@ -257,9 +219,9 @@ int main(int argc, const char* argv[]) {
     IterateList(myQ->L);
 
     for (int i = 0; i < test; i++) {
-        Dequeue(myQ);
-        printf("\nAfter Dequeue() -> the counter takes %lu\n", myQ->elementNum);
-    }
+       Dequeue(myQ);
+       printf("\nAfter Dequeue() -> the counter takes %lu\n", myQ->elementNum);
+   }
 
     Dequeue(myQ);
 
