@@ -95,7 +95,7 @@ QNode_t *ListSearch(DLLS_t *L, int k) {
 }
 
 void ListInsert(DLLS_t *L, QNodeData_t x) {
-    if (!L || !(L->sentinel)) {
+    if (!L || !L->sentinel) {
         printf("\nList is empty\n");
         return; 
     }
@@ -142,7 +142,7 @@ QNode_t *ListDeleteLast(DLLS_t *L) {
     QNode_t *x = NULL;
 
     // assumming that the expression is evaluated from left to right
-    if (!L || !(L->sentinel)) {
+    if (!L || !L->sentinel) {
         printf("\nError: list or sentinel is invalid\n");
         exit(-1);
     }
@@ -157,7 +157,7 @@ QNode_t *ListDeleteLast(DLLS_t *L) {
 void IterateList(DLLS_t *L) {
     QNode_t *x = NULL;
 
-    if (!L || (!L->sentinel)) {
+    if (!L || !L->sentinel) {
         printf("\nError: list or sentinel is invalid\n");
         exit(-1);
     }
@@ -204,9 +204,47 @@ int main(int argc, const char* argv[]) {
         }
     }
 
+    IterateList(myQ->L);
     printf("\nDequeuing element with max priority");
     char dqMaxVal = DequeueMax(myQ);
     printf("\nDequeued max priority element: %d\n", dqMaxVal);
+    IterateList(myQ->L);
+
+    key = 83;
+    list = ListSearch(myQ->L, key);
+    if (list == NULL) {
+        printf("\nBadpointer.\n");
+    }
+    else {
+        if (list == myQ->L->sentinel) {
+            printf("\n We could not find k = %d in the Queue\n", key);
+        }
+        else {
+            printf("\n We found the list element containing %d at %p\n", list->element.key, list);
+        }
+    }
+
+    DequeueMax(myQ);
+    IterateList(myQ->L);
+    key = 69;
+    list = ListSearch(myQ->L, key);
+    if (list == NULL) {
+        printf("\nBadpointer.\n");
+    }
+    else {
+        if (list == myQ->L->sentinel) {
+            printf("\n We could not find k = %d in the Queue\n", key);
+        }
+        else {
+            printf("\n We found the list element containing %d at %p\n", list->element.key, list);
+        }
+    }
+
+    IterateList(myQ->L);
+    printf("\nDequeuing element with max priority");
+    dqMaxVal = DequeueMax(myQ);
+    printf("\nDequeued max priority element: %d\n", dqMaxVal);
+    IterateList(myQ->L);
 
     for (int i = 0; i < test; i++) {
         Dequeue(myQ);
@@ -218,10 +256,12 @@ int main(int argc, const char* argv[]) {
     printf("\n\nYou can store a maximum of %lu elements in your PQ (PQ->maxSize), where as maxSize of a PQ is capped at PQLIMIT,"
             " which is currently set to %lu in your program.\n\n\n", myQ->maxSize, PQLIMIT);
 
+    // empty the list
     while(myQ->elementNum > 0) {
         Dequeue(myQ);
     }
 
+    // free allocated memory
     if (myQ->L->sentinel)
         free(myQ->L->sentinel);
     if (myQ->L)
@@ -302,7 +342,7 @@ char Dequeue(PQ_t* pq) {
     }
 
     QNode_t *ptr = ListDeleteLast(pq->L);
-    if (ptr && ptr != pq->L->sentinel) {
+    if (ptr) {
         val = ptr->element.key;
         pq->elementNum--;
         free(ptr);
@@ -314,7 +354,7 @@ char Dequeue(PQ_t* pq) {
 char DequeueMax(PQ_t* pq) {
     char val = -1;
 
-    if(!pq || !pq->L || !(pq->L->sentinel)) {
+    if(!pq || !pq->L || !pq->L->sentinel) {
         printf("\nDequeue()>> Invalid list or sentinel.\n");
         return (char) BADPTR;
     }
@@ -324,13 +364,31 @@ char DequeueMax(PQ_t* pq) {
     }
 
     QNode_t *maxNode = NULL;
-    QNode_t *x = pq->L->sentinel->next; 
+    QNode_t *x = pq->L->sentinel->next;
+    unsigned int maxPrioTotal= 0;      // more than 0 means multiple share highest priority value
 
     while (x != pq->L->sentinel) {
         if (!maxNode || x->element.prio > maxNode->element.prio) {
             maxNode = x;
+            maxPrioTotal = 0;          // resets to zero if new highest priority value
+        }
+        else if (x->element.prio == maxNode->element.prio) {
+            maxPrioTotal++;
         }
         x = x->next;
+    }
+
+    // nearest value to tail that matches the highest priority
+    if (maxPrioTotal > 0) {
+        QNode_t *y = pq->L->sentinel->prev;
+        while (y != pq->L->sentinel) {
+            if (y->element.prio == maxNode->element.prio) {
+                maxNode = y;
+                printf("\nMultiple elements had the same priority.\nElement %d dequeued first due to higher wait time...\n", maxNode->element.key);
+                break;
+            }
+            y = y->prev;
+        }
     }
 
     if (maxNode && maxNode != pq->L->sentinel) {
@@ -341,6 +399,9 @@ char DequeueMax(PQ_t* pq) {
         if (deletedNode) {
             free(deletedNode);
         }
+
+        deletedNode = NULL;
     }
+
     return (char) val;
 }
