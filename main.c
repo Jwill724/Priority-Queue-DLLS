@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #define INIT -128                      // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)        // When a dequeue operation encounters an underflow, it should return -127
@@ -65,7 +66,6 @@ void IterateList(DLLS_t *L);
 void Enqueue();
 char Dequeue();
 char DequeueMax();
-char FindMax();
 PQ_t *Build(unsigned long maxlen);
 
 // global Priority Queue
@@ -174,6 +174,8 @@ void IterateList(DLLS_t *L) {
 int main(int argc, const char* argv[]) {
     int test = PQLIMIT;
 
+    srand(time(NULL));
+
     myQ = Build(test);
     if (myQ == NULL) {
         printf("\nBadpointer. \n");
@@ -239,6 +241,14 @@ int main(int argc, const char* argv[]) {
             printf("\n We found the list element containing %d at %p\n", list->element.key, list);
         }
     }
+    for (int i = 0; i < 5; i++) {
+        e.key = rand() % 127;
+        e.prio = rand() % 4;
+        Enqueue(myQ, e);
+        printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
+    }
+    Dequeue(myQ);
+    Dequeue(myQ);
 
     IterateList(myQ->L);
     printf("\nDequeuing element with max priority");
@@ -255,11 +265,6 @@ int main(int argc, const char* argv[]) {
 
     printf("\n\nYou can store a maximum of %lu elements in your PQ (PQ->maxSize), where as maxSize of a PQ is capped at PQLIMIT,"
             " which is currently set to %lu in your program.\n\n\n", myQ->maxSize, PQLIMIT);
-
-    // empty the list
-    while(myQ->elementNum > 0) {
-        Dequeue(myQ);
-    }
 
     // free allocated memory
     if (myQ->L->sentinel)
@@ -290,7 +295,7 @@ PQ_t *Build(unsigned long maxlen) {
                 if (pq->L->sentinel) {
                     pq->L->sentinel->next = pq->L->sentinel;
                     pq->L->sentinel->prev = pq->L->sentinel;
-                    pq->L->sentinel->element.key =  0;
+                    pq->L->sentinel->element.key = 0;
                     pq->L->sentinel->element.prio = 0;
                 }
                 else {
@@ -320,13 +325,14 @@ PQ_t *Build(unsigned long maxlen) {
 }
 
 void Enqueue(PQ_t* pq, QNodeData_t e) {
-    if (pq->elementNum >= pq->maxSize) { 
-        printf("\nEnqueue()>> Attempt to overflow the queue at %p was prevented.\n", pq);
-        return;
-    }
     // insert e into the list
-    ListInsert(pq->L, e);
-    pq->elementNum++;
+    if (pq->elementNum <= pq->maxSize) {
+        ListInsert(pq->L, e);
+        pq->elementNum++;
+    }
+    else {
+        printf("\nEnqueue()>> Attempt to overflow the queue at %p was prevented.\n", pq);
+    }
 }
 
 char Dequeue(PQ_t* pq) {
@@ -365,7 +371,7 @@ char DequeueMax(PQ_t* pq) {
 
     QNode_t *maxNode = NULL;
     QNode_t *x = pq->L->sentinel->next;
-    unsigned int maxPrioTotal= 0;      // more than 0 means multiple share highest priority value
+    unsigned int maxPrioTotal = 0;      // more than 0 means multiple share highest priority value
 
     while (x != pq->L->sentinel) {
         if (!maxNode || x->element.prio > maxNode->element.prio) {
