@@ -9,7 +9,7 @@
 
 #define INIT -128                  // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)    // When a dequeue operation encounters an underflow, it should return -127
-#define OVERFLOW 0x80 + 0x02                  
+#define OVERFLOW 0x80 + 0x02
 #define BADPTR (0x08 + 0x03)
 #define PQLIMIT (unsigned long) 1.20E1
 
