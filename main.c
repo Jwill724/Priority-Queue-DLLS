@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #define INIT -128                      // The queue should utilize -128 to signify empty queue elements
 #define UNDERFLOW (0x80 + 0x01)        // When a dequeue operation encounters an underflow, it should return -127
@@ -171,6 +172,7 @@ void IterateList(DLLS_t *L) {
 
 int main(int argc, const char* argv[]) {
     int test = PQLIMIT;
+    srand(time(NULL));
 
     myQ = Build(test);
     if (myQ == NULL) {
@@ -224,7 +226,6 @@ int main(int argc, const char* argv[]) {
    }
 
     Dequeue(myQ);
-
     printf("\n\nYou can store a maximum of %lu elements in your PQ (PQ->maxSize), where as maxSize of a PQ is capped at PQLIMIT,"
             " which is currently set to %lu in your program.\n\n\n", myQ->maxSize, PQLIMIT);
 
@@ -333,30 +334,15 @@ char DequeueMax(PQ_t* pq) {
 
     QNode_t *maxNode = NULL;
     QNode_t *x = pq->L->sentinel->next;
-    unsigned int maxPrioTotal = 0;      // more than 0 means multiple share highest priority value
 
     while (x != pq->L->sentinel) {
         if (!maxNode || x->element.prio > maxNode->element.prio) {
             maxNode = x;
-            maxPrioTotal = 0;          // resets to zero if new highest priority value
         }
         else if (x->element.prio == maxNode->element.prio) {
-            maxPrioTotal++;
+            maxNode = x;   // since x is closer to tail it has higher elementNum
         }
         x = x->next;
-    }
-
-    // nearest value to tail that matches the highest priority
-    if (maxPrioTotal > 0) {
-        QNode_t *y = pq->L->sentinel->prev;
-        while (y != pq->L->sentinel) {
-            if (y->element.prio == maxNode->element.prio) {
-                maxNode = y;
-                printf("\nMultiple elements had the same priority.\nElement %d dequeued first due to higher wait time...\n", maxNode->element.key);
-                break;
-            }
-            y = y->prev;
-        }
     }
 
     if (maxNode && maxNode != pq->L->sentinel) {
