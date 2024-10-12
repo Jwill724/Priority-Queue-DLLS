@@ -173,7 +173,7 @@ int main(int argc, const char* argv[]) {
 //  srand(time(NULL));
     myQ = Build(test);
     if (myQ == NULL) {
-        printf("\nBadpointer. \n");
+        printf("\nBadpointer.\n");
         exit(-1);
     }
 
@@ -184,6 +184,8 @@ int main(int argc, const char* argv[]) {
         Enqueue(myQ, e);
         printf("After enqueue(%d, %lu) counter takes %lu\n", e.key, e.prio, myQ->elementNum);
     }
+    Enqueue(myQ, e);
+    Enqueue(myQ, e);
 
     IterateList(myQ->L);
     Enqueue(myQ, e);
@@ -201,11 +203,13 @@ int main(int argc, const char* argv[]) {
             printf("\n We found the list element containing %d at %p\n", list->element.key, list);
         }
     }
+}
 
+    printf("\nBefore DequeueMax\n");
     IterateList(myQ->L);
-    printf("\nDequeuing element with max priority");
+    printf("\nDequeuing element with max priority\n");
     char dqMaxVal = DequeueMax(myQ);
-    printf("\nDequeued max priority element: %d\n", dqMaxVal);
+    printf("After DequeueMax\n");
     IterateList(myQ->L);
 
     for (int i = 0; i < test; i++) {
@@ -295,6 +299,7 @@ void Enqueue(PQ_t* pq, QNodeData_t e) {
     if (pq->elementNum <= pq->maxSize) {
         ListInsert(pq->L, e);
         pq->elementNum++;
+        printf("\nSuccessfully queued element %d\n", e.key);
     }
     else {
         printf("\nEnqueue()>> Attempt to overflow the queue at %p was prevented.\n", pq);
@@ -319,6 +324,7 @@ char Dequeue(PQ_t* pq) {
         pq->elementNum--;
         free(ptr);
         ptr = NULL;    // avoid any dangling
+        printf("\nSuccessfully dequeued element %d\n", val);
     }
     
     return (char) val;
@@ -351,10 +357,13 @@ char DequeueMax(PQ_t* pq) {
 
     if (maxNode && maxNode != pq->L->sentinel) {
         val = maxNode->element.key;
+        unsigned int prioVal = 0;
+        prioVal = maxNode->element.prio;
         QNode_t *deletedNode = ListDelete(pq->L, maxNode);
         pq->elementNum--;
         free(deletedNode);
         deletedNode = NULL;  // avoid any dangling pointers
+        printf("\nSuccessfully dequeued max element %d with priority %d\n", val, prioVal);
     }
 
     return (char) val;
