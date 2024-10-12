@@ -203,7 +203,6 @@ int main(int argc, const char* argv[]) {
             printf("\n We found the list element containing %d at %p\n", list->element.key, list);
         }
     }
-}
 
     printf("\nBefore DequeueMax\n");
     IterateList(myQ->L);
